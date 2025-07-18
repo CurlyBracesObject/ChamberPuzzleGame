@@ -53,14 +53,6 @@
 - 状态机 (State Machine) 控制动画状态
 - 动画蒙太奇 (Anim Montage) 支持
 - IK (Inverse Kinematics) 系统集成
-```
-
-**关键变量：**
-
-- `IsInAir?`：布尔值，是否在空中
-- `Speed`：浮点值，移动速度
-- `IsWeaponEquipped`：布尔值，武器装备状态
-- `WeaponType`：枚举，武器类型
 
 
 
@@ -69,8 +61,7 @@
 
 
 
-
-### BP_BigDoors（大门控制系统）
+### BP_BigDoors
 
 **功能概述：** 智能双门控制系统，支持复杂的开关逻辑和碰撞检测
 
@@ -122,16 +113,9 @@
   * GetWorldLocation 获取当前位置进行比较
 ```
 
-**关键变量：**
 
-- `IsDoorOpen`：布尔值，门开关状态
-- `Direction`：浮点值，门移动方向
-- `Door1TargetLocation`、`Door2TargetLocation`：向量，目标位置
-- `WantCloseDoors`：布尔值，门关闭意图
 
-------
-
-### BP_BoxButton（按钮交互系统）
+### BP_BoxButton
 
 **功能概述：** 智能按钮系统，支持压力检测、定时器控制和音效反馈
 
@@ -204,18 +188,10 @@ Sound manager Play different sound based on Box type:
 - 根据箱子类型播放不同音效
 - 音频Component集成
 - 3D空间音效定位
-```
 
-**关键变量：**
 
-- `IsBoxPlaced`：布尔值，箱子是否正确放置
-- `BoxFound`：布尔值，检测到箱子
-- `Current`：浮点值，当前电流值
-- `ButtonPressed`：布尔值，按钮按下状态
 
-------
-
-### BP_BoxConveyor（传送带系统）
+### BP_BoxConveyor
 
 **功能概述：** 智能传送带系统，支持方向控制、速度调节和物体检测
 
@@ -358,16 +334,6 @@ Check if box is overlapping with conveyor:
   * 并行处理多个箱子的传送
 ```
 
-**关键变量详解：**
-
-- `InstanceStep`：浮点值，ISM实例步进值
-- `RotationAngle`：旋转器，当前旋转角度
-- `CheckIsBoxTimer`：定时器句柄，箱子检查定时器
-- `CurrentVoltage`：浮点值，当前电压
-- `UpdateRotation`：布尔值，是否更新旋转
-- `TargetBoxActor`：Actor引用，目标箱子对象
-
-------
 
 ### BP_BoxPlacer（箱子放置器）
 
@@ -542,17 +508,7 @@ Move Boxes within BoxPlacer to target locations:
   * 内存优化管理
 ```
 
-**关键变量详解：**
 
-- `IsBoxPlaced`：布尔值，箱子是否已放置
-- `PassedBoxes`：整数，已放置箱子数量
-- `Enabled`：布尔值，放置器是否启用
-- `BoxHalfSize`：向量，箱子半尺寸
-- `ProcessingBoxes`：Actor数组，正在处理的箱子列表
-- `IsBusy`：布尔值，放置器是否忙碌
-- `OverlappedActor`：Actor引用，重叠的Actor对象
-
-------
 
 ### BP_BoxTeleport（传送系统）
 
@@ -693,18 +649,6 @@ Teleporting. Set Teleporting flag = true. Play teleportation time line with scal
 - 错误处理：异常情况下的状态恢复
 ```
 
-**关键变量详解：**
-
-- `OverlappedActor`：Actor引用，重叠的Actor对象
-- `IsBoxPlaced`：布尔值，箱子是否放置在传送点
-- `StartBoxTransform`：变换，起始箱子变换
-- `StartTeleportation`：定时器句柄，传送启动计时器
-- `TeleportReady`：布尔值，传送准备状态
-- `TargetLocation`：向量，传送目标位置
-- `IsTargetTeleport`：布尔值，是否为目标传送点
-- `PlayerOnTeleport`：布尔值，玩家是否在传送点
-- `BeamMaterial`：材质实例，传送光束材质
-- `StarsArray`：Actor数组，星星特效数组
 
 ------
 
@@ -855,17 +799,6 @@ Transform Management:
   * 相对变换应用
 ```
 
-**关键变量详解：**
-
-- `StartRotation`：旋转器，桥梁起始旋转状态
-- `DestRotation`：旋转器，桥梁目标旋转状态
-- `BlendTime`：浮点值，动画混合时间
-- `IsBusy`：布尔值，桥梁是否在运动中
-- `RightTransform`：变换，右侧桥梁变换矩阵
-- `LeftTransform`：变换，左侧桥梁变换矩阵
-- `CurrRotation`：旋转器，当前旋转状态
-- `CurrentVoltage`：浮点值，当前电压
-- `Discharges`：浮点值，放电状态
 
 ------
 
@@ -1123,25 +1056,7 @@ Set visibility for forward/back buttons and up/down buttons:
   * 确保UI一致性和用户体验
 ```
 
-**关键变量完整列表：**
 
-- `BP_Player`：Actor引用，玩家对象
-- `UseDelegate`：布尔值，是否使用委托模式
-- `DMI`：材质实例，动态材质实例
-- `IsBusy`：布尔值，按钮是否繁忙
-- `ButtonInUse`：布尔值，按钮是否在使用中
-- `PressedLeft`：E布尔值，左键是否按下
-- `PressedRight`：E布尔值，右键是否按下
-- `PressedForward`：E布尔值，前进键是否按下
-- `PressedUp`：E布尔值，上键是否按下
-- `ButtonAdd`：布尔值，添加按钮状态
-- `DelegateActor`：Actor引用，委托目标Actor
-- `ActionPressedDown`：布尔值，动作按下状态
-- `OverlappingActors`：Actor数组，重叠的Actor列表
-- `LastActionTime`：浮点值，最后动作时间
-- `BlinkFrequency`：浮点值，灯光闪烁频率
-- `TransitionSpeed`：浮点值，过渡速度
-- `WarningDuration`：浮点值，警告显示时长
 
 
 ### BP_ButtonFloor（地面按钮）- 深度技术分析
@@ -1347,16 +1262,7 @@ Custom Action event - uses for eject Button. Restore initial button state and lo
   * 状态验证：确保恢复完整
 ```
 
-**关键变量和状态管理：**
 
-- `IsButtonPressed`：布尔值，按钮按下状态
-- `ButtonSize`：枚举，按钮尺寸类型
-- `OverlappedActors`：Actor数组，重叠对象列表
-- `JobType`：枚举，任务类型
-- `IsButtonActive`：布尔值，按钮激活状态
-- `InitialLocation`：向量，初始位置
-- `CurrentButtonState`：枚举，当前按钮状态
-- `LastPressTime`：浮点值，最后按压时间
 
 
 
@@ -2712,8 +2618,102 @@ Armed/Unarmed animation混合控制：
    - Result连接到角色动画系统
   
 
+### BP_TelekinesisPot
+#### 部署阶段实现系统：
+```
+Deploy Stage.You can implement your deploy animation部署序列控制：
+算法执行流程：
+Event StartDeploy触发 → Set Object Location精确定位 → 
+Set Object Rotation方向校准 → Set Enable Gravity重力控制 → 
+Timeline驱动部署动画 → Static Mesh状态同步
 
----------------------------------------------------------
+技术实现逻辑：
+1. StartDeploy事件激活时，系统计算最优部署位置和角度
+2. 通过Set Object Location将罐子精确定位到传送目标坐标
+3. Set Object Rotation确保罐子以正确的朝向完成部署
+4. Set Enable Gravity动态禁用重力，防止部署过程中的物理干扰
+5. Timeline控制整个部署过程的时间序列和动画曲线
+6. Static Mesh组件实时同步所有变换参数
+
+核心算法优势：
+- 精确控制：亚像素级的位置和旋转精度
+- 物理隔离：部署期间暂停重力影响，确保可控性
+- 时序管理：Timeline提供可编程的动画曲线控制
+```
+
+#### 重力状态管理系统：
+```
+Set Enable Gravity物理状态切换机制：
+状态转换逻辑：
+传送准备阶段 → 重力禁用 → 悬浮控制 → 
+传送执行 → 重力恢复 → 物理回归
+
+算法实现：
+1. 传送开始时禁用Target(Primitive Component)的重力属性
+2. Gravity Enabled = false期间，罐子不受重力影响，保持悬浮状态
+3. 系统通过程序化控制维持罐子的空间位置
+4. 传送完成后重新启用重力，恢复正常物理行为
+5. 状态切换过程中实时监控物体的稳定性
+
+技术细节：
+- 物理引擎解耦：临时脱离物理模拟，实现精确控制
+- 状态记忆：系统记录重力切换前的物理状态
+- 安全恢复：确保重力恢复后物体的物理行为连续性
+```
+
+#### 物体标记视觉系统：
+```
+Spot/Unspot object标记反馈控制：
+视觉反馈算法：
+Event SpotObject_BPI → Branch条件验证 → 
+SpotUnspot Timeline → Set Scalar Parameter Value → 
+Material Instance Dynamic → Power参数调制
+
+执行逻辑链：
+1. SpotObject_BPI接口接收传送枪发出的标记信号
+2. Branch节点验证标记条件：距离范围、物体状态、标记权限
+3. SpotUnspot Timeline驱动标记动画的渐进播放/倒播
+4. Set Scalar Parameter Value实时调整材质的"Power"参数值
+5. Material Instance Dynamic响应参数变化，产生发光/高亮效果
+6. Spot状态布尔值控制标记的激活/去激活状态
+
+反向处理（Unspot）：
+- Timeline倒向播放，Power参数从峰值逐渐降至0
+- 材质效果平滑淡出，视觉上提供清晰的状态反馈
+- 系统重置标记相关的所有内部状态变量
+
+技术优势：
+- 实时反馈：毫秒级的视觉响应速度
+- 参数化控制：可调节的标记强度和动画曲线
+- 状态一致性：视觉表现与内部逻辑状态完全同步
+```
+
+#### 武器定位精准系统：
+```
+Weapon Target Location高精度定位算法：
+定位计算架构：
+Start Object Location基准坐标 → Vector Normalize方向计算 → 
+Tolerance容差处理 → 坐标系变换 → 最终位置确定
+
+算法实现流程：
+1. Start Object Location作为空间变换的基准坐标点
+2. Vector Normalize对传送方向向量进行单位化处理
+3. 距离算法：基于物体尺寸和传送枪射程计算最优传送距离
+4. Tolerance容差系统：
+   - X轴容差：处理水平方向的定位误差
+   - Y轴容差：补偿垂直方向的位置偏移
+   - Z轴容差：调整高度方向的定位精度
+5. 坐标验证：确保目标位置不与环境几何体产生碰撞
+6. 最终坐标输出：生成经过优化的传送目标位置
+
+精度控制技术：
+- 浮点精度：使用双精度浮点运算确保定位准确性
+- 环境感知：实时检测周围环境，避免传送到不安全位置
+- 自适应调整：根据环境条件动态调整容差参数
+- 路径预测：预计算传送轨迹，确保传送过程的平滑性
+```
+
+
 BP_TelekinesisPickuper
 功能概述：
 高级物体拾取和传送系统，支持多重验证、动画控制和精确位置管理
