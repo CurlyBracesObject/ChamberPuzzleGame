@@ -2707,8 +2707,11 @@ Tolerance容差处理 → 坐标系变换 → 最终位置确定
 - 路径预测：预计算传送轨迹，确保传送过程的平滑性
 ```
 
-BP_TelekinesisPickuper - 拾取器蓝图执行流程
-物体验证检测蓝图逻辑链
+
+## BP_TelekinesisPickuper - 拾取器
+
+### 物体验证检测蓝图逻辑链
+```
 Event Hit节点 → Branch(Condition检查) → Object Picked状态判断
 
 核心执行思路：
@@ -2724,7 +2727,10 @@ Event Hit节点 → Branch(Condition检查) → Object Picked状态判断
 - Branch节点作为门控，只有满足所有条件才继续执行
 - ObjectPicked作为状态锁，防止重复拾取同一物体
 - OverlappedActor变量存储目标引用，供后续节点使用
-拾取处理时序控制蓝图
+```
+
+### 拾取处理时序控制蓝图
+```
 ProcessPickup自定义事件 → Set Play Rate → Timeline_0播放 → Update回调链
 
 Timeline驱动的并行执行架构：
@@ -2745,7 +2751,10 @@ Timeline.Finished输出 → Close Holders → 拾取完成状态设置
 - Timeline提供平滑的0-1曲线，避免线性插值的生硬感
 - 并行分支确保位置、旋转、物理同步更新
 - Set Play Rate动态调整Timeline速度，适应不同物体大小
-内部移动空间管理蓝图
+```
+
+### 内部移动空间管理蓝图
+```
 Display Timeline → Get Current Location → Set World Location And Rotation
 
 空间计算节点链：
@@ -2769,7 +2778,10 @@ Sweep Hit Result → Branch(Hit检查) →
 - 每次移动前都进行距离和碰撞检测
 - Sweep检测提供预测性碰撞信息，避免穿模
 - 约束系统确保物体不会超出拾取器边界
-执行动作状态机蓝图
+```
+
+### 执行动作状态机蓝图
+```
 Execute Action → Get Object Data → Branch(Enabled检查) → 多路径分发
 
 状态验证链：
@@ -2794,8 +2806,12 @@ Box Transform应用 → Relative Transform计算 →
 - Get Object Data: 获取物体元数据，用于后续计算
 - Box Transform: 处理包围盒变换，确保精确定位
 - Relative Transform: 计算相对于拾取器的局部坐标
-BP_TelekinesisRotator - 旋转器蓝图状态控制
-初始化构造脚本蓝图
+```
+
+## BP_TelekinesisRotator - 旋转器蓝图状态控制
+
+### 初始化构造脚本蓝图
+```
 Construction Script → Set Relative Rotation → Start Position记录
 
 构造期间执行链：
@@ -2815,7 +2831,10 @@ Unlock Position = Start Position + UnlockOffset
 - Construction Script确保每次生成都有正确的初始状态
 - Start/Unlock Position提供旋转过程的参考坐标系
 - 角度值以度为单位存储，便于设计师调整
-按钮旋转事件蓝图逻辑
+```
+
+### 按钮旋转事件蓝图逻辑
+```
 Event ButtonPressed_BPI → Branch(InProcess检查) → Gate Loop → Timeline_0
 
 旋转执行门控机制：
@@ -2838,7 +2857,10 @@ Set InProcess=False → Gate Loop.Close → APC Audio Component停止
 - InProcess作为互斥锁，保证旋转过程的原子性
 - Gate Loop提供额外的控制层，可以随时中断旋转
 - 音频位置跟随旋转实时更新，保持空间音效准确性
-解锁条件验证蓝图
+```
+
+### 解锁条件验证蓝图
+```
 Execute Action → Branch(Length>0) → Get Position → Compare → Target Arrows更新
 
 复杂条件检查链：
@@ -2860,8 +2882,12 @@ Target Arrows状态更新 → 广播解锁事件
 3. 每个箭头位置与UnlockPosition比较，容差范围内算作匹配
 4. 所有条件满足时才触发解锁序列
 5. Message Called Action防止重复调用解锁逻辑
-BP_VerticalLadder - 攀爬蓝图状态机
-玩家检测验证蓝图链
+```
+
+## BP_VerticalLadder - 攀爬蓝图状态机
+
+### 玩家检测验证蓝图链
+```
 Get All Overlapped Objects → ForEach → Cast to PlayerCharacter → Branch(Valid)
 
 多重验证过滤器：
@@ -2884,7 +2910,10 @@ Set on Vertical Ladder BPI调用
 - Cast to PlayerCharacter过滤出玩家类型
 - 胶囊体高度验证确保是正确的玩家实例
 - 多个Set节点同步更新不同层级的状态变量
-重叠体积事件处理蓝图
+```
+
+### 重叠体积事件处理蓝图
+```
 OnComponentBeginOverlap(TopOverlapVolume) → Check Set Player Overlap → Top Target设置
 
 顶部重叠事件链：
@@ -2904,7 +2933,10 @@ Top/Bottom Target = None → 清除所有引用
 - 两个重叠体积独立处理，但共享验证逻辑
 - Target变量记录进入的具体位置(顶部/底部)
 - End Overlap确保状态清理，防止悬挂引用
-攀爬序列控制蓝图
+```
+
+### 攀爬序列控制蓝图
+```
 Event Activate_BPI → Branch(IsValid PlayerActor) → Lift to APCController
 
 攀爬启动验证：
@@ -2930,7 +2962,10 @@ Set Player Position → Montage for Player记录
 3. Set New Player Location将玩家移动到攀爬起始点
 4. Play Anim Montage启动攀爬动画
 5. 多个状态变量同步更新，确保系统一致性
-过渡完成处理蓝图
+```
+
+### 过渡完成处理蓝图
+```
 Event TransitionComplete_BPI → Set Player Is Controller → Bottom Entry处理
 
 完成事件处理链：
@@ -2950,6 +2985,8 @@ Montage for Play停止 → Use Custom Input恢复 →
 2. Player Is Controller恢复玩家的输入控制权
 3. Bottom/Top Entry处理不同攀爬方向的结束位置
 4. 清理所有攀爬相关的临时状态和引用
+```
+
 
 
 
