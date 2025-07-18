@@ -2707,285 +2707,252 @@ Tolerance容差处理 → 坐标系变换 → 最终位置确定
 - 路径预测：预计算传送轨迹，确保传送过程的平滑性
 ```
 
+BP_TelekinesisPickuper - 拾取器蓝图执行流程
+物体验证检测蓝图逻辑链
+Event Hit节点 → Branch(Condition检查) → Object Picked状态判断
 
-BP_TelekinesisPickuper
-功能概述：
-高级物体拾取和传送系统，支持多重验证、动画控制和精确位置管理
-核心代码逻辑：
-物体验证与拾取检测：
-Check if Telekinesis object is not grabbed by Player and can be pickuped：
-1. 多重验证链：
-   - Event Hit检测碰撞触发
-   - Data Override检测数据覆盖状态
-   - Object Picked检测物体拾取状态
+核心执行思路：
+1. Event Hit触发时，系统获得碰撞信息和目标Actor
+2. Branch节点的Condition输入连接多个AND逻辑门
+   - !ObjectPicked (确保物体未被拾取)
+   - IsValid(HitActor) (验证碰撞Actor有效性)
+   - DataOverride.IsEmpty() (检查数据覆盖状态)
+3. True执行路径：Set ObjectPicked = True → 记录OverlappedActor引用
+4. False执行路径：直接终止，不执行后续拾取逻辑
 
-2. 分支控制流程：
-   - Branch(Condition) → 验证拾取条件
-   - True路径：执行拾取逻辑
-   - False路径：忽略无效拾取
+蓝图设计关键：
+- Branch节点作为门控，只有满足所有条件才继续执行
+- ObjectPicked作为状态锁，防止重复拾取同一物体
+- OverlappedActor变量存储目标引用，供后续节点使用
+拾取处理时序控制蓝图
+ProcessPickup自定义事件 → Set Play Rate → Timeline_0播放 → Update回调链
 
-3. 状态更新：
-   - Object Picked设置拾取状态
-   - Overlapped Actor记录重叠Actor
-   - 更新内部状态机
-拾取处理系统：
-Pickup processing复杂拾取流程：
-1. 位置和旋转控制：
-   - ProcessPickup事件触发
-   - Set Play Rate设置播放速率
-   - Close Holders关闭容器
+Timeline驱动的并行执行架构：
+Timeline_0.Update输出 → 分发到三个并行分支：
+├── Set World Location分支 (位置控制)
+├── Set World Rotation分支 (旋转控制)  
+└── Set Enable Gravity分支 (物理控制)
 
-2. 时间轴驱动：
-   - Timeline_0时间轴控制
-   - Update更新位置参数
-   - Finished完成拾取序列
+每帧Update回调逻辑：
+1. Timeline输出Alpha值(0-1)作为插值参数
+2. Set World Location: Lerp(StartLocation, TargetLocation, Alpha)
+3. Set World Rotation: Lerp(StartRotation, TargetRotation, Alpha)
+4. Set Enable Gravity在Alpha=0.1时设置为False，Alpha=0.9时恢复True
 
-3. 重力管理：
-   - Set Enable Gravity禁用物体重力
-   - Target确保物体悬浮状态
-   - Gravity Enabled物理状态控制
+Timeline.Finished输出 → Close Holders → 拾取完成状态设置
 
-4. 位置同步：
-   - Set World Location设置世界位置
-   - Set World Rotation设置世界旋转
-   - Deploy Distortion Scale X/Y/Z缩放控制
-移动和定位系统：
-Move an object inside of Pickuper物体内部移动：
-1. 复杂位置计算：
-   - Display时间轴控制显示
-   - Get Current Location获取当前位置
-   - Set World Location And Rotation综合设置
+蓝图执行优势：
+- Timeline提供平滑的0-1曲线，避免线性插值的生硬感
+- 并行分支确保位置、旋转、物理同步更新
+- Set Play Rate动态调整Timeline速度，适应不同物体大小
+内部移动空间管理蓝图
+Display Timeline → Get Current Location → Set World Location And Rotation
 
-2. 多重变换处理：
-   - Set World Location单独位置设置
-   - Set World Rotation单独旋转设置
-   - 并行处理确保同步
+空间计算节点链：
+Get Current Location → Vector-Vector(减法) → Vector Length → Branch(距离检查)
+├── True: 执行移动 → Set World Location And Rotation
+└── False: 保持当前位置
 
-3. 距离和约束：
-   - World Location坐标系变换
-   - New Location新位置计算
-   - New Rotation新旋转计算
+位置约束算法蓝图实现：
+1. Get Current Location获取物体当前坐标
+2. 通过Vector减法计算到拾取器中心的距离向量
+3. Vector Length计算距离标量值
+4. Branch比较距离与MaxMoveDistance
+5. 满足条件时，Set World Location And Rotation应用新变换
 
-4. 状态管理：
-   - Start Object Location起始位置记录
-   - Start Transition Scale起始变换比例
-   - Sweep Hit Result碰撞检测结果
-执行动作系统：
-Execute Action动作执行流程：
-1. 多路径执行：
-   - Get Object Data获取物体数据
-   - Get Object Area获取物体区域
-   - Enabled启用状态检查
+碰撞检测集成：
+Sweep Hit Result → Branch(Hit检查) → 
+├── True: 调整位置避开碰撞
+└── False: 直接应用目标位置
 
-2. 变换链处理：
-   - Set Transform设置变换矩阵
-   - Return Value变换返回值
-   - Relative Transform相对变换
+蓝图设计思路：
+- 每次移动前都进行距离和碰撞检测
+- Sweep检测提供预测性碰撞信息，避免穿模
+- 约束系统确保物体不会超出拾取器边界
+执行动作状态机蓝图
+Execute Action → Get Object Data → Branch(Enabled检查) → 多路径分发
 
-3. 位置验证：
-   - Get World Transform获取世界变换
-   - Box Transform盒子变换
-   - Start Transform起始变换
+状态验证链：
+Get Object Data → Is Valid → Get Object Area → Compare Area
+├── Valid且Area匹配 → 继续执行
+└── Invalid或Area不匹配 → 终止执行
 
-4. 最终应用：
-   - Set World Transform应用世界变换
-   - Execute Action完成动作执行
-   - 状态机更新
+变换处理流水线：
+Get World Transform → Set Transform → Return Value传递 →
+Box Transform应用 → Relative Transform计算 → 
+最终Set World Transform执行
 
-**BP_TelekinesisRotator**
-功能概述：
-精密旋转控制系统，支持相对旋转设置和位置锁定机制
-核心代码逻辑：
-初始化和位置设置：
-Setup start and unlock positions旋转器初始化：
-1. 构造脚本执行：
-   - Construction Script初始化
-   - Center中心点设置
-   - Start Position起始位置记录
+蓝图执行流程：
+1. Execute Action触发时先获取物体数据
+2. Get Object Data返回物体的类型、大小、属性信息
+3. Branch(Enabled)检查物体是否处于可操作状态
+4. Get Object Area获取物体占用的空间区域
+5. 通过一系列Transform节点计算最终位置
+6. Set World Transform应用计算结果
 
-2. 相对旋转配置：
-   - Set Relative Rotation设置相对旋转
-   - Target Scene Component目标场景组件
-   - New Rotation X(Roll)[0.0]横滚角度
+关键节点作用：
+- Get Object Data: 获取物体元数据，用于后续计算
+- Box Transform: 处理包围盒变换，确保精确定位
+- Relative Transform: 计算相对于拾取器的局部坐标
+BP_TelekinesisRotator - 旋转器蓝图状态控制
+初始化构造脚本蓝图
+Construction Script → Set Relative Rotation → Start Position记录
 
-3. 解锁位置设置：
-   - Unlock Pos解锁位置
-   - New Rotation Y(Pitch)俯仰角度
-   - New Rotation Z(Yaw)[0.0]偏航角度
+构造期间执行链：
+Construction Script触发 → 
+Center组件获取 → Set Relative Rotation(0,StartAngle,0) →
+Start Position = GetActorLocation() → 
+Unlock Position = Start Position + UnlockOffset
 
-4. 位置记录：
-   - Start Position记录起始状态
-   - Unlock Position记录解锁状态
-   - 用于状态恢复和验证
-按钮触发旋转：
-Button Pressed event.Rotate arrow按钮旋转控制：
-1. 事件触发链：
-   - Event ButtonPressed_BPI按钮按下接口
-   - Branch条件分支判断
-   - In Process检查是否正在处理
+角度初始化逻辑：
+1. Construction Script在编辑器和运行时都会执行
+2. Set Relative Rotation设置初始角度到StartAngle
+3. Start Position记录初始世界坐标作为参考点
+4. Unlock Position计算解锁时的目标坐标
+5. 这些值作为实例变量存储，供运行时使用
 
-2. 循环控制：
-   - Gate Loop循环门控制
-   - Set In Process设置处理状态
-   - Timeline_0时间轴驱动
+蓝图设计意图：
+- Construction Script确保每次生成都有正确的初始状态
+- Start/Unlock Position提供旋转过程的参考坐标系
+- 角度值以度为单位存储，便于设计师调整
+按钮旋转事件蓝图逻辑
+Event ButtonPressed_BPI → Branch(InProcess检查) → Gate Loop → Timeline_0
 
-3. 音频反馈：
-   - APC Audio Component音频组件
-   - Get Position获取位置信息
-   - 播放旋转音效
+旋转执行门控机制：
+Event ButtonPressed_BPI → Branch(!InProcess) →
+├── True: Set InProcess=True → Gate Loop.Open → Timeline_0.Play
+└── False: 忽略输入(防止重复触发)
 
-4. 角度计算：
-   - Current角度变量
-   - Start Angle起始角度
-   - Dest Angle目标角度
-   - 插值计算平滑旋转
-物体标记和旋转：
-Spot Object.Turn On/Off light物体标记旋转：
-1. 标记检测：
-   - Spot Object物体标记事件
-   - Object identification物体识别
-   - Light control灯光控制
+Timeline驱动旋转更新：
+Timeline_0.Update → Lerp(StartAngle, DestAngle, Alpha) → 
+Set Relative Rotation → Update音频位置
 
-2. 旋转执行：
-   - Set Relative Rotation执行旋转
-   - Center组件作为旋转中心
-   - New Rotation应用新的旋转角度
+角度计算蓝图节点：
+Current Angle变量 → Float+Float(加45度) → Fmod(%, 360) → Dest Angle
+这个链条确保角度在0-360范围内循环
 
-3. 状态管理：
-   - Current Position当前位置
-   - Target Position目标位置
-   - 旋转状态跟踪
-执行动作系统：
-Execute Action复杂动作执行：
-1. 多分支处理：
-   - Branch条件判断
-   - LENGTH长度检查
-   - Target Arrows目标箭头验证
+Timeline.Finished回调：
+Set InProcess=False → Gate Loop.Close → APC Audio Component停止
 
-2. 位置计算：
-   - Get Position获取当前位置
-   - Unlock Position解锁位置比较
-   - Set到具体位置
+蓝图执行特点：
+- InProcess作为互斥锁，保证旋转过程的原子性
+- Gate Loop提供额外的控制层，可以随时中断旋转
+- 音频位置跟随旋转实时更新，保持空间音效准确性
+解锁条件验证蓝图
+Execute Action → Branch(Length>0) → Get Position → Compare → Target Arrows更新
 
-3. 动作链执行：
-   - At Closing Point关闭点检测
-   - Target arrived目标到达确认
-   - Is Already Called Action重复调用检查
+复杂条件检查链：
+LENGTH(Target Arrows) → Branch(>0) → 
+ForEach Target Arrow → Get Position → 
+Compare(Position, UnlockPosition, Tolerance) → AND逻辑聚合
 
-4. 状态更新：
-   - Message Called Action消息调用动作
-   - Button Box Action按钮盒子动作
-   - Target Arrows目标箭头更新
-     
-**BP_VerticalLadder**
-功能概述：
-复杂垂直攀爬系统，支持玩家检测、状态管理和平滑过渡动画
-核心代码逻辑：
-玩家检测和设置：
-Check and set if overlapped Actor = Player actor玩家检测：
-1. 多重Actor验证：
-   - Get All Overlapped Objects获取所有重叠物体
-   - Add Overlapped Objects List添加到重叠列表
-   - Get Overlapped Actor List获取重叠Actor列表
+位置比较算法蓝图：
+Get Position → Vector-Vector → Vector Length → Branch(<Tolerance)
+每个Target Arrow都要通过这个检查
 
-2. 玩家识别：
-   - Set/Get Player Overlap设置/获取玩家重叠
-   - Player Capsule Half Height玩家胶囊半高
-   - Capsule Half Height胶囊半高比较
+解锁触发机制：
+所有AND条件满足 → Message Called Action → Button Box Action →
+Target Arrows状态更新 → 广播解锁事件
 
-3. 位置验证：
-   - Is Bottom Overlap底部重叠检查
-   - Set Player Overlap设置玩家重叠状态
-   - Player on Ladder玩家在梯子状态
+蓝图逻辑核心：
+1. LENGTH检查确保Target Arrows数组不为空
+2. ForEach遍历所有需要验证的目标箭头
+3. 每个箭头位置与UnlockPosition比较，容差范围内算作匹配
+4. 所有条件满足时才触发解锁序列
+5. Message Called Action防止重复调用解锁逻辑
+BP_VerticalLadder - 攀爬蓝图状态机
+玩家检测验证蓝图链
+Get All Overlapped Objects → ForEach → Cast to PlayerCharacter → Branch(Valid)
 
-4. 状态同步：
-   - Set on Vertical Ladder BPI设置垂直梯子接口
-   - Target self目标自身
-   - On Ladder状态更新
-重叠区域管理：
-Overlaps for Top and Bottom overlap volumes上下重叠体积：
-1. 顶部重叠处理：
-   - On Component Begin Overlap(TopOverlapVolume)顶部开始重叠
-   - Check Set Player Overlap检查设置玩家重叠
-   - Top Target顶部目标设置
+多重验证过滤器：
+Get All Overlapped Objects → Object Array →
+ForEach循环 → Cast to PlayerCharacter →
+├── Success: 继续验证
+└── Failed: 跳过此Object
 
-2. 底部重叠处理：
-   - On Component Begin Overlap(BottomOverlapVolume)底部开始重叠
-   - Bottom Target底部目标设置
-   - Target Location目标位置记录
+玩家特征验证：
+Cast成功 → Get Capsule Component → Get Scaled Capsule Half Height →
+Compare(Height, PlayerCapsuleHalfHeight, Tolerance) → Final Branch
 
-3. 结束重叠处理：
-   - On Component End Overlap结束重叠事件
-   - Reset Player Overlap重置玩家重叠
-   - 清除状态和引用
+状态设置链：
+验证通过 → Set Player Overlap = True → 
+Set Player on Ladder = True → 
+Set on Vertical Ladder BPI调用
 
-4. 区域验证：
-   - Area区域检测
-   - Overlapped Component重叠组件验证
-   - Other Actor其他Actor过滤
-梯子处理和状态机：
-Action 1 event.Start processing to the Ladder梯子处理开始：
-1. 动作触发：
-   - Event Activate_BPI激活事件接口
-   - Player Actor玩家Actor获取
-   - Is Busy繁忙状态检查
+蓝图设计原理：
+- Get All Overlapped Objects一次性获取所有重叠Actor
+- Cast to PlayerCharacter过滤出玩家类型
+- 胶囊体高度验证确保是正确的玩家实例
+- 多个Set节点同步更新不同层级的状态变量
+重叠体积事件处理蓝图
+OnComponentBeginOverlap(TopOverlapVolume) → Check Set Player Overlap → Top Target设置
 
-2. 空间检测：
-   - Lift to Actual/Free Space提升到实际/自由空间
-   - Override Area覆盖区域
-   - Player Target玩家目标
+顶部重叠事件链：
+OnComponentBeginOverlap → Other Actor → Is Valid → 
+Cast to PlayerCharacter → Check Set Player Overlap →
+Top Target = Other Actor → Target Location记录
 
-3. 位置设置：
-   - Set New Player Location设置新玩家位置
-   - Set Player Position设置玩家位置
-   - Can Move With Ladder可与梯子一起移动
+底部重叠对称处理：
+OnComponentBeginOverlap(BottomOverlapVolume) → 相同验证流程 →
+Bottom Target = Other Actor → 不同的Target Location
 
-4. 状态转换：
-   - Montage for Player玩家动画蒙太奇
-   - Play required anim montage播放所需动画蒙太奇
-   - Current State当前状态管理
-过渡完成和自定义处理：
-Transition complete过渡完成处理：
-1. 过渡事件：
-   - Event TransitionComplete_BPI过渡完成接口
-   - Player Actor玩家Actor处理
-   - APCController控制器获取
+结束重叠清理：
+OnComponentEndOverlap → Reset Player Overlap → 
+Top/Bottom Target = None → 清除所有引用
 
-2. 状态清理：
-   - Set Player Is Controller设置玩家控制器状态
-   - Player Finished玩家完成状态
-   - Bottom Entry底部入口处理
+蓝图事件驱动特点：
+- 两个重叠体积独立处理，但共享验证逻辑
+- Target变量记录进入的具体位置(顶部/底部)
+- End Overlap确保状态清理，防止悬挂引用
+攀爬序列控制蓝图
+Event Activate_BPI → Branch(IsValid PlayerActor) → Lift to APCController
 
-3. 位置管理：
-   - Ladder Length梯子长度计算
-   - Top Entry Back顶部入口返回
-   - Front Facing Start面向起始方向
+攀爬启动验证：
+Event Activate_BPI → Get Player Actor → Is Valid → Branch →
+├── True: 继续攀爬流程
+└── False: 忽略激活请求
 
-4. 最终处理：
-   - Set on Vertical Ladder BPI设置垂直梯子接口
-   - Montage for Play蒙太奇播放
-   - Use Custom Input使用自定义输入
-动画蒙太奇系统：
-Playe required anim montage播放动画蒙太奇：
-1. 动画选择：
-   - Play Anim Montage播放动画蒙太奇
-   - Target目标角色
-   - Montage蒙太奇资源
+控制器转换链：
+Lift to APCController → Cast to APCController → 
+Set New Player Location → Can Move With Ladder设置
 
-2. 播放控制：
-   - Return Value返回播放结果
-   - Play Rate播放速率[1.0]
-   - Start Section起始段落
+动画蒙太奇播放：
+Play Anim Montage → Target(Player) → Montage资源 → 
+Play Rate = 1.0 → Return Value验证播放成功
 
-3. 状态管理：
-   - Montage for Play播放蒙太奇
-   - Play from section从段落播放
-   - Section Name段落名称
+状态转换管理：
+Montage播放成功 → Current State更新 → 
+Set Player Position → Montage for Player记录
 
-4. 完成处理：
-   - Animation completion动画完成
-   - State transition状态转换
-   - 返回正常控制状态
+蓝图执行序列：
+1. Activate事件首先验证Player Actor有效性
+2. Cast to APCController确保控制器类型正确
+3. Set New Player Location将玩家移动到攀爬起始点
+4. Play Anim Montage启动攀爬动画
+5. 多个状态变量同步更新，确保系统一致性
+过渡完成处理蓝图
+Event TransitionComplete_BPI → Set Player Is Controller → Bottom Entry处理
+
+完成事件处理链：
+Event TransitionComplete_BPI → Get Player Actor → 
+APCController获取 → Set Player Is Controller状态恢复
+
+位置管理计算：
+Ladder Length获取 → Top Entry Back计算 → 
+Front Facing Start方向调整 → 最终位置确定
+
+蒙太奇清理：
+Montage for Play停止 → Use Custom Input恢复 → 
+玩家控制权返还
+
+蓝图收尾逻辑：
+1. TransitionComplete标志攀爬动画播放完毕
+2. Player Is Controller恢复玩家的输入控制权
+3. Bottom/Top Entry处理不同攀爬方向的结束位置
+4. 清理所有攀爬相关的临时状态和引用
+
+
+
 
 ## 游戏流程系统
 
@@ -2993,7 +2960,7 @@ Playe required anim montage播放动画蒙太奇：
 
 根据PDF文档和3D视图，游戏采用模块化关卡设计：
 
-1. **起始区域**：玩家出生点，基础教学区域
+1. **起始区域**：玩家出生点
 2. **谜题区域**：多个独立的谜题房间
 3. **传送系统**：连接不同区域的传送点
 4. **终点区域**：关卡完成目标点
