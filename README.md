@@ -1,5 +1,7 @@
 # Chamber Puzzle Game - 3D Physics-Based Puzzle Game
 
+game video: https://www.bilibili.com/video/BV1ogu2zeEka/?vd_source=c096d37a6e7624ca39a2afef5c3f64d2
+
 ## Project Overview
 
 Chamber Puzzle Game is an advanced 3D physics-based puzzle game developed using Unreal Engine 5, featuring complex mechanical interactions, telekinesis abilities, and immersive environmental storytelling. Built entirely with Blueprint Visual Scripting, this project demonstrates modern game development techniques including advanced physics simulation, optimized rendering systems, and sophisticated user interaction design.
