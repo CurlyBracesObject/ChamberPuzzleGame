@@ -75,28 +75,6 @@ Dynamic material instances provide real-time visual feedback for object states, 
 **Audio Design:**
 Comprehensive 3D audio system with positional sound effects, environmental audio processing, and dynamic audio parameter adjustment based on game state and player actions.
 
-## Code Architecture Examples
-
-**Event-Driven Communication:**
-```blueprint
-Event BeginPlay → Initialize Dynamic Materials → Set Initial States → Register Event Listeners
-```
-
-**Physics-Based Interaction:**
-```blueprint
-Player Input → Ray Trace Detection → Object Validation → Apply Physics Forces → Update Visual Feedback
-```
-
-**State Machine Implementation:**
-```blueprint
-Trigger Event → State Validation → Branch Logic → Execute Actions → Update UI → Broadcast State Change
-```
-
-**Performance Optimization:**
-```blueprint
-Tick Event → Distance Check → LOD Selection → Batch Update → Visibility Culling → Memory Cleanup
-```
-
 ## Development Methodology
 
 The project emphasizes clean architecture principles with separation of concerns, reusable components, and scalable design patterns. Each system is designed for modularity, allowing individual components to be tested, modified, or replaced without affecting other systems.
